@@ -1,4 +1,4 @@
-package com.wenbo.http;
+package com.wenbo.httpserver;
 
 import java.io.ByteArrayOutputStream;
 import java.util.HashMap;

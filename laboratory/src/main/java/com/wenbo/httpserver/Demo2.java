@@ -1,4 +1,4 @@
-package com.wenbo.http;
+package com.wenbo.httpserver;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
