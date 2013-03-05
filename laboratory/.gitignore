@@ -1,2 +1,4 @@
-*.class
+*.classpath
 *.DS_Store
+*.settings
+/target
