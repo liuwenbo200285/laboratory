@@ -18,8 +18,11 @@ public class TimeDemo {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		Calendar loginoutCalendar = Calendar.getInstance();
-		System.out.println(loginoutCalendar.get(Calendar.DAY_OF_YEAR));
+//		Calendar loginoutCalendar = Calendar.getInstance();
+//		System.out.println(loginoutCalendar.get(Calendar.DAY_OF_YEAR));
+		int i = 2020103;
+		int n = i%100000;
+		System.out.println((i-n)/1000000);
 	}
 
 }
