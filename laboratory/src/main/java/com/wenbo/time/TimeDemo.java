@@ -20,9 +20,11 @@ public class TimeDemo {
 	public static void main(String[] args) {
 //		Calendar loginoutCalendar = Calendar.getInstance();
 //		System.out.println(loginoutCalendar.get(Calendar.DAY_OF_YEAR));
-		int i = 2020103;
-		int n = i%100000;
-		System.out.println((i-n)/1000000);
+//		int i = 2020103;
+////		int n = i%100000;
+////		System.out.println((i-n)/1000000);
+//		System.out.println(i>>14);
+		
 	}
 
 }
