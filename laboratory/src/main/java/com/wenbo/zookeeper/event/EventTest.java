@@ -8,7 +8,7 @@ import org.apache.zookeeper.ZooKeeper;
 
 public class EventTest {
 	
-	private static final int CLIENT_PORT = 3188;
+	private static final int CLIENT_PORT = 2181;
 
 	/**
 	 * @param args
@@ -44,6 +44,7 @@ public class EventTest {
 		 zk.delete("/testRootPath/testChildPathOne",-1); 
 		 // 删除父目录节点
 		 zk.delete("/testRootPath",-1); 
+		 Thread.sleep(1000*60*60);
 		 // 关闭连接
 		 zk.close();
 
