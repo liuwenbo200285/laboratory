@@ -1,15 +1,14 @@
 package com.wenbo.httpserver;
 
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Executors;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -19,7 +18,6 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-import sun.net.httpserver.*;
 
 @SuppressWarnings("restriction")
 public class Demo1 {
@@ -58,13 +56,15 @@ public class Demo1 {
 					}
 					Map<String,Object> haMap1 = (Map<String, Object>) kryo.readClassAndObject(input);
 					System.out.println(haMap1.size());
-//					headers.set("Content-Type", "application/octet-stream");
 					ByteArrayOutputStream oStream = new ByteArrayOutputStream();
 					Output output = new Output(oStream);
-					
 					Map<String,Object> haMap = new HashMap<String, Object>();
-					haMap.put("errorcode",1);
-					kryo.writeClassAndObject(output,haMap);
+					List<User> users = new ArrayList<User>(8000);
+					for(int i = 0; i < 8000; i++){
+						users.add(new User(i,"user"+i));
+					}
+					haMap.put("user",users);
+					kryo.writeObject(output,haMap);
 					output.close();
 					byte[] cc = oStream.toByteArray();
 					httpExchange.sendResponseHeaders(200,cc.length);
