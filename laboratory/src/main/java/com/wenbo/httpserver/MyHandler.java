@@ -19,8 +19,19 @@ import org.eclipse.jetty.server.handler.AbstractHandler;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import com.esotericsoftware.kryo.serializers.TaggedFieldSerializer;
+import com.esotericsoftware.shaded.org.objenesis.strategy.StdInstantiatorStrategy;
 
 public class MyHandler extends AbstractHandler {
+	
+	private static Kryo getKryo(){
+		Kryo kryo = new Kryo();
+		kryo.setReferences(false); 
+		kryo.setRegistrationRequired(false); 
+		kryo.setInstantiatorStrategy(new StdInstantiatorStrategy());
+		kryo.setDefaultSerializer(TaggedFieldSerializer.class);
+		return kryo;
+	}
 
 	@Override
 	public void handle(String arg0, Request arg1, HttpServletRequest request,
@@ -30,7 +41,6 @@ public class MyHandler extends AbstractHandler {
 		}
 		OutputStream responseStream = response.getOutputStream();
 		int len = Integer.parseInt(request.getHeader("Content-length"));
-		Kryo kryo = new Kryo();
 		InputStream inputStream = request.getInputStream();
 		ByteArrayOutputStream bArrayOutputStream = new ByteArrayOutputStream();
 		byte b[] = new byte[len];
@@ -48,17 +58,18 @@ public class MyHandler extends AbstractHandler {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		Kryo kryo = getKryo();
 		Map<String,Object> haMap1 = (Map<String, Object>) kryo.readClassAndObject(input);
 		System.out.println(haMap1.size());
 		ByteArrayOutputStream oStream = new ByteArrayOutputStream();
 		Output output = new Output(oStream);
 		Map<String,Object> haMap = new HashMap<String, Object>();
 		List<User> users = new ArrayList<User>(8000);
-		for(int i = 0; i < 8000; i++){
+		for(int i = 0; i < 80000; i++){
 			users.add(new User(i,"user"+i));
 		}
 		haMap.put("user",users);
-		kryo.writeObject(output,haMap);
+		kryo.writeClassAndObject(output,haMap);
 		output.close();
 		byte[] cc = oStream.toByteArray();
 //		response.sendResponseHeaders(200,cc.length);

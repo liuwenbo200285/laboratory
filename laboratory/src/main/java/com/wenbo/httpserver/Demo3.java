@@ -1,6 +1,7 @@
 package com.wenbo.httpserver;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -10,20 +11,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.caucho.hessian.io.HessianInput;
+import com.caucho.hessian.io.HessianOutput;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.serializers.TaggedFieldSerializer;
 import com.esotericsoftware.shaded.org.objenesis.strategy.StdInstantiatorStrategy;
 
-public class Demo2 {
+public class Demo3 {
 
 	/**
 	 * @param args
 	 * @throws Exception 
 	 */
 	public static void main(String[] args) throws Exception {
-	    for(int i = 0; i < 1000; i++){
+	    for(int i = 0; i < 100; i++){
 	    	request();
 	    }
 	}
@@ -62,13 +65,11 @@ public class Demo2 {
 			   // 连接，从上述第2条中url.openConnection()至此的配置必须要在connect之前完成， ]
 			   OutputStream outputStream = new BufferedOutputStream(urlConnection.getOutputStream(),64*1024);
 			   ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-			   Output output = new Output(byteArrayOutputStream);
+			   HessianOutput hessianOutput = new HessianOutput(byteArrayOutputStream);
 			   Map<String,Object> haMap1 = new HashMap<String, Object>();
 			   haMap1.put("aaa",111);
-			   Kryo kryo = getKryo();
-			   kryo.writeClassAndObject(output,haMap1);
-			   output.close();
-			   byteArrayOutputStream.close();
+			   hessianOutput.writeObject(haMap1);
+			   hessianOutput.close();
 			   byte[] bb = byteArrayOutputStream.toByteArray();
 			   outputStream.write(Util.encrypt(bb));
 			   outputStream.close();
@@ -77,12 +78,11 @@ public class Demo2 {
 				   size = urlConnection.getContentLength();
 			   }
 			   InputStream inputStream = urlConnection.getInputStream();
-			   byte[] cc = new byte[size];
-			   while (inputStream.read(cc) != -1) {
-			   }
-			   System.out.println(cc.length);
-			   Input input = new Input(cc);
-			   Map<String,Object> haMap = (Map<String, Object>) kryo.readClassAndObject(input);
+			   bb = new byte[size];
+			   inputStream.read(bb);
+			   bb = Util.decrypt(bb);
+			   HessianInput hessianInput = new HessianInput(new ByteArrayInputStream(bb));
+			   Map<String,Object> haMap = (Map<String, Object>) hessianInput.readObject();
 			   List<User> users = (List<User>) haMap.get("user");
 			   System.out.println(users.size());
 		} catch (Exception e) {
