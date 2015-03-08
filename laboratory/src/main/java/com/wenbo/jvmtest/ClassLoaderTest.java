@@ -16,13 +16,13 @@ public class ClassLoaderTest {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-//		ClassLoader classLoader = ClassLoaderTest.class.getClassLoader();
-//		while(classLoader.getParent() != null){
-//			System.out.println(classLoader.getClass());
-//			classLoader = classLoader.getParent();
-//		}
-//		System.out.println(classLoader.getClass());
-		System.out.println(ClassLoaderTest.class.getClassLoader());
+		ClassLoader classLoader = ClassLoaderTest.class.getClassLoader();
+		while(classLoader.getParent() != null){
+			System.out.println(classLoader.getClass());
+			classLoader = classLoader.getParent();
+		}
+		System.out.println(classLoader.getClass());
+//		System.out.println(ClassLoaderTest.class.getClassLoader());
 		
 		
 	}

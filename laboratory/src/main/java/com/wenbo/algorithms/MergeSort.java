@@ -4,7 +4,7 @@
  * 
  * 版权所有@深圳市精彩无限数码科技有限公司
  */
-package com.wenbo.sort;
+package com.wenbo.algorithms;
 
 /**
  * @author Administrator
