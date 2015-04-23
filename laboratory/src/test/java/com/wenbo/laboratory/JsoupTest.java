@@ -42,7 +42,7 @@ public class JsoupTest {
 	}
 
 	public void test() throws IOException{
-		for(int i = 101; i <= 201; i++){
+		for(int i = 1; i <= 100; i++){
 			String url = DOMAIN+"thread0806.php?fid=22&search=&page="+i;
 			System.out.println("===============第"+i+"页==================");
 			getHtml(url);
@@ -72,7 +72,7 @@ public class JsoupTest {
 				}else{
 					info  = EntityUtils.toString(response.getEntity());
 				}
-				System.out.println(info);
+//				System.out.println(info);
 				Document doc = Jsoup.parse(info);
 				parse(doc);
 			}
