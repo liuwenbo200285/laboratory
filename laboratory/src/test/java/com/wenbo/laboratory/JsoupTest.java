@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.time.LocalDate;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.lang.StringUtils;
@@ -42,12 +43,18 @@ public class JsoupTest {
 	}
 
 	public void test() throws IOException{
-		for(int i = 1; i <= 100; i++){
+		int i = 1;
+		while(true){
 			String url = DOMAIN+"thread0806.php?fid=22&search=&page="+i;
 			System.out.println("===============第"+i+"页==================");
 			getHtml(url);
-//	        Scanner sc = new Scanner(System.in);
-//	        System.out.println(sc.next());
+			try {
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			i++;
 		}
 	}
 	
@@ -111,7 +118,7 @@ public class JsoupTest {
 			if(StringUtils.isNumeric(replayStr)){
 				int num = Integer.parseInt(replayStr);
 				if(num >= MIN_REPLAY && num <= MAX_REPLAY){
-					String info = title+"===url:"+url+"===回复数："+num;
+					String info = title+"===url:"+url+"===回复数："+num+":"+LocalDate.now().toString();
 					writeToFile(info);
 				}
 			}
@@ -121,6 +128,7 @@ public class JsoupTest {
 	public void writeToFile(String info){
 		RandomAccessFile randomAccessFile = null;
 		try {
+			System.out.println(info);
 			info = info+"\r\n";
 			File file = new File("/Volumes/Share/System/Library/1024/info.txt");
 			randomAccessFile = new RandomAccessFile(file,"rw");

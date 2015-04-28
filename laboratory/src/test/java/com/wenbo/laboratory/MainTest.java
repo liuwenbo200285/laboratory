@@ -14,12 +14,18 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
 import com.alibaba.druid.pool.DruidDataSource;
@@ -32,21 +38,80 @@ public class MainTest {
 	private static DruidPooledConnection connection= null;
 	
 	private static RandomAccessFile randomAccessFile = null;
+	
+	private static RandomAccessFile randomAccessErrorFile = null;
+	
+    private static final ExecutorService exceuteService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    
+    private static final AtomicInteger AU_ATOMIC_INTEGER = new AtomicInteger();
 
 	/**
 	 * @param args
 	 * @throws ParseException 
 	 */
 	public static void main(String[] args) throws ParseException {
-		findUnionId();
-//		backup();
+//		findUnionId();
+		int num = findUserId(59364233);
+		System.out.println("ALl num:"+num);
 		try {
-			if(randomAccessFile != null){
-				randomAccessFile.close();
+			while(num == AU_ATOMIC_INTEGER.get()){
+				if(randomAccessFile != null){
+					randomAccessFile.close();
+				}
+				if(randomAccessErrorFile != null){
+					randomAccessErrorFile.close();
+				}
+				exceuteService.shutdownNow();
+				break;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	
+	public static int findUserId(int beginId){
+		String sql = "select f.uuid,u.nickname,f.email,f.platform,f.reg_time,u.avatar,u.isband from friend f  right join user_profile u on f.email=u.email where f.uid > "+beginId+" ";
+		ResultSet resultSet = null;
+		int num = 0;
+		try {
+			resultSet = getConnection().createStatement().executeQuery(sql);
+			while(resultSet.next()){
+				String uuid = resultSet.getString("uuid");
+				if(uuid == null){
+					continue;
+				}
+				String email = resultSet.getString("email");
+				String nickname = resultSet.getString("nickname");
+				String platform = resultSet.getString("platform");
+				String reg_time = resultSet.getString("reg_time");
+				String avatar = resultSet.getString("avatar");
+				String isband = resultSet.getString("isband");
+				UserInfo userInfo = new UserInfo();
+				userInfo.setAvatar(avatar);
+				userInfo.setEmail(email);
+				userInfo.setIsband(isband);
+				userInfo.setNickname(nickname);
+//				userInfo.setOpenid(openid);
+				userInfo.setPlatform(platform);
+				userInfo.setReg_time(reg_time);
+				userInfo.setUuid(uuid);
+				sendData(userInfo);
+				num++;
+			}
+			System.out.println("send Data end!!!!!");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}finally{
+			try {
+				if(resultSet != null){
+					resultSet.close();
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		return num;
 	}
 	
 	
@@ -125,6 +190,68 @@ public class MainTest {
 	    return false;
 	}
 	
+	public static void sendData(UserInfo userInfo){
+		exceuteService.submit(()->{
+			HttpResponse response = null;
+			HttpClient httpClient = new DefaultHttpClient();
+			 try {
+				 	String openid = null;
+					if(StringUtils.startsWith(userInfo.getEmail(),"WECHAT_")){
+						String findOpenIdSql = "select openid from accounts_wechat where uuid='"+userInfo.getUuid()+"'";
+						ResultSet webchatResultSet = getConnection().createStatement().executeQuery(findOpenIdSql);
+						while(webchatResultSet.next()){
+							openid = webchatResultSet.getString("openid");
+							break;
+						}
+					}else if(StringUtils.startsWith(userInfo.getEmail(),"XIAOMI_")){
+						String findOpenIdSql = "select openid from accounts_xiaomi where uuid='"+userInfo.getUuid()+"'";
+						ResultSet xiaomResultSet = getConnection().createStatement().executeQuery(findOpenIdSql);
+						while(xiaomResultSet.next()){
+							openid = xiaomResultSet.getString("openid");
+							break;
+						}
+					}else{
+						String findOpenIdSql = "select rcontent from accounts_oauth where remail='"+userInfo.getEmail()+"'";
+						ResultSet oauthResultSet = getConnection().createStatement().executeQuery(findOpenIdSql);
+						while(oauthResultSet.next()){
+							openid = oauthResultSet.getString("rcontent");
+							break;
+						}
+					}
+				    List<BasicNameValuePair> parameters = new ArrayList<BasicNameValuePair>();
+				    parameters.add(new BasicNameValuePair("uuid",userInfo.getUuid()));
+				    parameters.add(new BasicNameValuePair("nickname",userInfo.getNickname()));
+				    parameters.add(new BasicNameValuePair("email",userInfo.getEmail()));
+				    parameters.add(new BasicNameValuePair("reg_time",userInfo.getReg_time()));
+				    parameters.add(new BasicNameValuePair("isband",userInfo.getIsband()));
+				    parameters.add(new BasicNameValuePair("avatar",userInfo.getAvatar()));
+				    parameters.add(new BasicNameValuePair("platform",userInfo.getPlatform()));
+				    parameters.add(new BasicNameValuePair("openid",openid));
+				    parameters.add(new BasicNameValuePair("invoker","www"));
+					UrlEncodedFormEntity uef = new UrlEncodedFormEntity(parameters,"UTF-8");
+					HttpPost httpPost = new HttpPost("http://192.168.9.54/addEsUser");
+					httpPost.setEntity(uef);
+		            response = httpClient.execute(httpPost);
+					if (response.getStatusLine().getStatusCode() == 200) {
+						String json = EntityUtils.toString(response.getEntity());
+						JSONObject object = JSONObject.parseObject(json);
+						if(object.getIntValue("status") == 0){
+							writeToFile(userInfo.getUuid()+":"+userInfo.getEmail()+":"+userInfo.getNickname(),"send.txt");
+						}else{
+							writeToErrorFile(json+"========="+userInfo.getUuid()+":"+userInfo.getEmail()+":"+userInfo.getNickname(),"sendError.txt");
+						}
+					}
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}finally{
+				httpClient.getConnectionManager().closeExpiredConnections();
+				System.out.println("send finish!!!!!!");
+				System.out.println(AU_ATOMIC_INTEGER.incrementAndGet());
+			}
+		});
+	}
+	
 	public static void updateUnionId(int id,String unionid,String email){
 		String sql = "update accounts_wechat set unionid='"+unionid+"_"+id+"' where id="+id;
 		try {
@@ -133,7 +260,7 @@ public class MainTest {
 				System.out.println("update error!sql:"+sql);
 			}else{
 				System.out.println("id:"+id+" update success!sql:"+sql);
-				writeToFile(id+":"+unionid+":"+email);
+				writeToFile(id+":"+unionid+":"+email,"vip.txt");
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -158,10 +285,10 @@ public class MainTest {
 		}
 	}
 	
-	public static void writeToFile(String info){
+	public static synchronized void writeToFile(String info,String fileName){
 		try {
 			if(randomAccessFile == null){
-				File file = new File("/Users/wenboliu/data/tmp/update.txt");
+				File file = new File("/Users/wenboliu/data/tmp/"+fileName);
 				randomAccessFile = new RandomAccessFile(file,"rw");
 				long length = randomAccessFile.length();
 				randomAccessFile.seek(length);
@@ -175,12 +302,29 @@ public class MainTest {
 		}
 	}
 	
+	public static synchronized void writeToErrorFile(String info,String fileName){
+		try {
+			if(randomAccessErrorFile == null){
+				File file = new File("/Users/wenboliu/data/tmp/"+fileName);
+				randomAccessErrorFile = new RandomAccessFile(file,"rw");
+				long length = randomAccessErrorFile.length();
+				randomAccessErrorFile.seek(length);
+			}
+			info = info+"\r\n";
+			randomAccessErrorFile.write(info.getBytes());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}finally{
+			
+		}
+	}
+	
 	
 	public static DruidPooledConnection getConnection(){
 		if(connection == null){
 			try {
 				DruidDataSource dataSource = new DruidDataSource();
-				dataSource.setUrl("jdbc:mysql://192.168.1.55:3306/passport");
+				dataSource.setUrl("jdbc:mysql://192.168.1.110:3306/passport");
 				dataSource.setUsername("neo");
 				dataSource.setPassword("fuckbaozi");
 				connection = dataSource.getConnection();
