@@ -38,7 +38,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.util.IOUtils;
 import com.google.common.base.Strings;
-import com.hunantv.fw.redis.Redis;
 
 public class Demo {
 	
@@ -190,8 +189,7 @@ public class Demo {
 				StringEntity stringentity = new StringEntity(searchStr,"UTF-8");
 				httpPost.addHeader("content-type", "application/json");
 				httpPost.setEntity(stringentity);
-				try(CloseableHttpResponse response = HttpClients.createDefault().execute(httpPost);
-						Redis redis = new Redis()){
+				try(CloseableHttpResponse response = HttpClients.createDefault().execute(httpPost);){
 					if(response.getStatusLine().getStatusCode() == 200){
 						String resStr = EntityUtils.toString(response.getEntity());
 						JSONObject object = JSON.parseObject(resStr);
@@ -251,8 +249,7 @@ public class Demo {
 				StringEntity stringentity = new StringEntity(searchStr,"UTF-8");
 				httpPost.addHeader("content-type", "application/json");
 				httpPost.setEntity(stringentity);
-				try(CloseableHttpResponse response = HttpClients.createDefault().execute(httpPost);
-						Redis redis = new Redis()){
+				try(CloseableHttpResponse response = HttpClients.createDefault().execute(httpPost);){
 					if(response.getStatusLine().getStatusCode() == 200){
 						String resStr = EntityUtils.toString(response.getEntity());
 						JSONObject object = JSON.parseObject(resStr);
@@ -266,7 +263,7 @@ public class Demo {
 						for(int i = 0; i < num; i++){
 							JSONObject logObject  = array.getJSONObject(i).getJSONObject("_source");
 							String ticket = logObject.getString("ticket");
-							String info = redis.jedis.get(ticket);
+							String info = "";
 							if(Strings.isNullOrEmpty(info)){
 								noSession ++;
 							}else{
@@ -301,7 +298,7 @@ public class Demo {
 									e.printStackTrace();
 									System.out.println(logObject.getString("Api_GetSession"));
 								}
-								info = redis.jedis.get(ticket);
+								info = "";
 								if(Strings.isNullOrEmpty(info)){
 									continue;
 								}

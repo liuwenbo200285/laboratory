@@ -15,16 +15,11 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import net.sf.ehcache.store.disk.ods.AATreeSet;
-
 import org.apache.commons.lang3.StringUtils;
-//import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-//import org.apache.http.impl.client.HttpClientBuilder;
-
-import com.hunantv.fw.redis.Redis;
 
 import redis.clients.jedis.Jedis;
+//import org.apache.http.client.methods.CloseableHttpResponse;
+//import org.apache.http.impl.client.HttpClientBuilder;
 
 public class Demo01 {
 	
@@ -39,14 +34,14 @@ public class Demo01 {
 	}
 	
 	public static void sendEmail(){
-		try(Redis redis = new Redis()){
+		try{
 			String time = LocalDateTime.now().format(YYMMDD_FORMATTER);
 			String key = "ott_count_"+time;
-			String ottcount = redis.jedis.get(key);
+			String ottcount = "";
 			key = "mpp_count_"+time;
-			String mppcount = redis.jedis.get(key);
+			String mppcount = "";
 			int mpp = Integer.parseInt(mppcount)-41760;
-			String info = redis.jedis.info("Keyspace");
+			String info = "";
 			String[] infos = StringUtils.split(info,",");
 			int allkeys = Integer.parseInt(infos[0].split("=")[1]);
 			int expires = Integer.parseInt(infos[1].split("=")[1]);
